@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบบันทึกสต็อก</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2436;
+    --border: #2a3048;
+    --accent-in: #00c896;
+    --accent-out: #f97316;
+    --text: #e8eaf0;
+    --text-muted: #7a8099;
+    --text-dim: #4a5270;
+    --danger: #ef4444;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Sarabun', sans-serif;
+    min-height: 100vh;
+    font-size: 15px;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(42,48,72,0.4) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(42,48,72,0.4) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 36px;
+  }
+
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--accent-in), #00a37c);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0;
+    box-shadow: 0 0 24px rgba(0,200,150,0.3);
+  }
+
+  .header-text h1 { font-size: 22px; font-weight: 700; letter-spacing: 0.3px; }
+  .header-text p  { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+  .tabs {
+    display: flex; gap: 4px; margin-bottom: 24px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 5px;
+  }
+
+  .tab {
+    flex: 1; padding: 11px 20px; border-radius: 9px; border: none;
+    background: transparent; color: var(--text-muted);
+    font-family: 'Sarabun', sans-serif; font-size: 14px; font-weight: 600;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 8px; transition: all 0.2s;
+  }
+
+  .tab .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: currentColor; opacity: 0.4; transition: opacity 0.2s;
+  }
+
+  .tab.active-in  { background: rgba(0,200,150,0.12); color: var(--accent-in);  box-shadow: inset 0 0 0 1px rgba(0,200,150,0.25); }
+  .tab.active-out { background: rgba(249,115,22,0.12); color: var(--accent-out); box-shadow: inset 0 0 0 1px rgba(249,115,22,0.25); }
+  .tab.active-in .dot, .tab.active-out .dot { opacity: 1; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+
+  .card-header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .card-header-in  { background: rgba(0,200,150,0.06); }
+  .card-header-out { background: rgba(249,115,22,0.06); }
+  .card-header .icon { font-size: 18px; }
+  .card-header h2 { font-size: 15px; font-weight: 700; }
+
+  .card-body { padding: 24px; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .form-grid .full { grid-column: 1 / -1; }
+
+  .field-group label {
+    display: block; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: var(--text-muted); margin-bottom: 7px;
+  }
+
+  .field-group input,
+  .field-group select {
+    width: 100%; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 14px; color: var(--text);
+    font-family: 'Sarabun', sans-serif; font-size: 14px;
+    outline: none; transition: border-color 0.2s, box-shadow 0.2s; appearance: none;
+  }
+
+  .field-group select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8099' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+  }
+
+  .field-group input:focus, .field-group select:focus {
+    border-color: var(--accent-in); box-shadow: 0 0 0 3px rgba(0,200,150,0.1);
+  }
+
+  .panel-out .field-group input:focus, .panel-out .field-group select:focus {
+    border-color: var(--accent-out); box-shadow: 0 0 0 3px rgba(249,115,22,0.1);
+  }
+
+  .btn-submit {
+    width: 100%; padding: 13px; border-radius: var(--radius-sm); border: none;
+    font-family: 'Sarabun', sans-serif; font-size: 15px; font-weight: 700;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    gap: 8px; margin-top: 20px; transition: all 0.2s; letter-spacing: 0.3px;
+  }
+
+  .btn-submit-in  { background: var(--accent-in);  color: #0a1a14; box-shadow: 0 4px 20px rgba(0,200,150,0.3); }
+  .btn-submit-in:hover  { background: #00dfa8; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(0,200,150,0.4); }
+  .btn-submit-out { background: var(--accent-out); color: #1a0a00; box-shadow: 0 4px 20px rgba(249,115,22,0.3); }
+  .btn-submit-out:hover { background: #fb8a38; transform: translateY(-1px); box-shadow: 0 6px 28px rgba(249,115,22,0.4); }
+  .btn-submit:disabled  { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+
+  .toast {
+    position: fixed; bottom: 32px; right: 32px;
+    padding: 14px 22px; border-radius: var(--radius-sm);
+    font-size: 14px; font-weight: 600; z-index: 999;
+    transform: translateY(80px); opacity: 0;
+    transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    display: flex; align-items: center; gap: 10px;
+    max-width: 320px; box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { background: var(--accent-in); color: #0a1a14; }
+  .toast.error   { background: var(--danger); color: #fff; }
+  .toast.loading { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+  .spinner {
+    width: 16px; height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: currentColor; border-radius: 50%;
+    animation: spin 0.7s linear infinite; flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+  .products-header {
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+  }
+  .products-header span {
+    font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+  }
+
+  .btn-add-row {
+    background: none; border: 1px dashed var(--border); border-radius: 6px;
+    padding: 4px 12px; color: var(--text-muted);
+    font-family: 'Sarabun', sans-serif; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+  }
+  .btn-add-row:hover { border-color: var(--accent-in); color: var(--accent-in); }
+
+  .product-row {
+    display: grid; grid-template-columns: 1fr 100px 32px;
+    gap: 8px; margin-bottom: 8px; align-items: center;
+  }
+
+  .product-row select, .product-row input {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 9px 12px; color: var(--text);
+    font-family: 'Sarabun', sans-serif; font-size: 13px;
+    outline: none; transition: border-color 0.2s; appearance: none;
+  }
+
+  .product-row select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%237a8099' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px;
+  }
+
+  .product-row select:focus, .product-row input:focus { border-color: var(--accent-in); }
+  .panel-out .product-row select:focus, .panel-out .product-row input:focus { border-color: var(--accent-out); }
+
+  .btn-remove-row {
+    width: 32px; height: 32px; background: none; border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text-dim); cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s; flex-shrink: 0;
+  }
+  .btn-remove-row:hover { border-color: var(--danger); color: var(--danger); background: rgba(239,68,68,0.08); }
+
+  .stock-info {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 6px;
+    font-size: 13px; color: var(--text-muted);
+    display: flex; align-items: center; gap: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .stock-info .val       { font-weight: 600; color: var(--accent-in); }
+  .stock-info .val.low   { color: var(--accent-out); }
+  .stock-info .val.empty { color: var(--danger); }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .form-grid .full { grid-column: 1; }
+    header h1 { font-size: 18px; }
+    .product-row { grid-template-columns: 1fr 80px 32px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <header>
+    <div class="logo-icon">📦</div>
+    <div class="header-text">
+      <h1>ระบบบันทึกสต็อกสินค้า</h1>
+      <p>Stock Management — บันทึกข้อมูลลง Google Sheets</p>
+    </div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active-in" onclick="switchTab('in')" id="tab-in">
+      <span class="dot"></span> รับสินค้าเข้า
+    </button>
+    <button class="tab" onclick="switchTab('out')" id="tab-out">
+      <span class="dot"></span> เบิกสินค้าออก
+    </button>
+  </div>
+
+  <!-- Panel: รับเข้า -->
+  <div class="panel active" id="panel-in">
+    <div class="card">
+      <div class="card-header card-header-in">
+        <span class="icon">📥</span>
+        <h2>บันทึกการรับสินค้าเข้า</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field-group">
+            <label>วันที่รับเข้า</label>
+            <input type="date" id="in-date" />
+          </div>
+          <div class="field-group">
+            <label>ผู้รับเข้า</label>
+            <input type="text" id="in-person" placeholder="ชื่อผู้รับสินค้า" />
+          </div>
+          <div class="field-group full">
+            <label>หมายเหตุ (ถ้ามี)</label>
+            <input type="text" id="in-note" placeholder="เช่น เลขที่ใบสั่งซื้อ" />
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="products-header">
+          <span>รายการสินค้า</span>
+          <button class="btn-add-row" onclick="addProductRow('in')">+ เพิ่มรายการ</button>
+        </div>
+        <div id="in-products"></div>
+        <button class="btn-submit btn-submit-in" id="btn-in" onclick="submitForm('in')">
+          📥 บันทึกการรับสินค้า
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Panel: เบิกใช้ -->
+  <div class="panel panel-out" id="panel-out">
+    <div class="card">
+      <div class="card-header card-header-out">
+        <span class="icon">📤</span>
+        <h2>บันทึกการเบิกสินค้า</h2>
+      </div>
+      <div class="card-body">
+        <div class="form-grid">
+          <div class="field-group">
+            <label>วันที่เบิกใช้</label>
+            <input type="date" id="out-date" />
+          </div>
+          <div class="field-group">
+            <label>ผู้เบิกใช้</label>
+            <input type="text" id="out-person" placeholder="ชื่อผู้เบิกสินค้า" />
+          </div>
+          <div class="field-group full">
+            <label>หมายเหตุ (ถ้ามี)</label>
+            <input type="text" id="out-note" placeholder="เช่น แผนก / วัตถุประสงค์" />
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="products-header">
+          <span>รายการสินค้า</span>
+          <button class="btn-add-row" onclick="addProductRow('out')">+ เพิ่มรายการ</button>
+        </div>
+        <div id="out-products"></div>
+        <button class="btn-submit btn-submit-out" id="btn-out" onclick="submitForm('out')">
+          📤 บันทึกการเบิกสินค้า
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// =====================
+// CONFIG — ฝังหลังบ้าน
+// =====================
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8Z3jtbpRZB5ZslPK2u_Cdtcw_hiVVP9Gg6xOHnkSgBbT2xhrEikOid5cLcdcPdG5a/exec';
+
+const PRODUCTS = [
+  'K3 Ca 3.5',
+  'K3 Ca 2.5',
+  'K2 Ca 2.5',
+  'Hemo B',
+  'NSS',
+  'น้ำยา On-line',
+  'Citrosteri',
+
+];
+
+let localStock = {};
+PRODUCTS.forEach(p => localStock[p] = 0);
+
+// =====================
+// INIT
+// =====================
+window.onload = () => {
+  setToday('in-date');
+  setToday('out-date');
+  addProductRow('in');
+  addProductRow('out');
+  fetchStock();
+};
+
+function setToday(id) {
+  document.getElementById(id).value = new Date().toISOString().split('T')[0];
+}
+
+// =====================
+// TABS
+// =====================
+function switchTab(tab) {
+  ['in','out'].forEach(t => {
+    document.getElementById(`panel-${t}`).classList.remove('active');
+    document.getElementById(`tab-${t}`).className = 'tab';
+  });
+  document.getElementById(`panel-${tab}`).classList.add('active');
+  document.getElementById(`tab-${tab}`).className = `tab active-${tab}`;
+}
+
+// =====================
+// PRODUCT ROWS
+// =====================
+function addProductRow(type) {
+  const container = document.getElementById(`${type}-products`);
+  const div = document.createElement('div');
+  div.className = 'product-row';
+
+  const opts = PRODUCTS.map(p => `<option value="${p}">${p}</option>`).join('');
+  div.innerHTML = `
+    <select onchange="${type === 'out' ? 'updateStockInfo(this)' : ''}">
+      <option value="">— เลือกรายการสินค้า —</option>
+      ${opts}
+    </select>
+    <input type="number" min="1" placeholder="จำนวน" />
+    <button class="btn-remove-row" onclick="removeRow(this)" title="ลบ">✕</button>
+  `;
+  container.appendChild(div);
+
+  if (type === 'out') {
+    const info = document.createElement('div');
+    info.className = 'stock-info';
+    info.style.cssText = 'margin-bottom:12px;display:none';
+    info.innerHTML = `คงเหลือ: <span class="val">—</span>`;
+    container.appendChild(info);
+  }
+}
+
+function removeRow(btn) {
+  const row = btn.parentElement;
+  const next = row.nextElementSibling;
+  if (next && next.classList.contains('stock-info')) next.remove();
+  row.remove();
+}
+
+function updateStockInfo(select) {
+  const row = select.parentElement;
+  const next = row.nextElementSibling;
+  if (!next || !next.classList.contains('stock-info')) return;
+  const product = select.value;
+  if (!product) { next.style.display = 'none'; return; }
+  const qty = localStock[product] || 0;
+  next.style.display = 'flex';
+  const cls = qty <= 0 ? 'empty' : qty <= 5 ? 'low' : 'ok';
+  next.innerHTML = `สินค้า: <strong style="color:var(--text)">${product}</strong> &nbsp;|&nbsp; คงเหลือ: <span class="val ${cls}">${qty} ชิ้น</span>`;
+}
+
+// =====================
+// FETCH STOCK
+// =====================
+async function fetchStock() {
+  try {
+    const res = await fetch(`${SCRIPT_URL}?action=getStock`);
+    const data = await res.json();
+    if (data.stock) localStock = data.stock;
+  } catch(e) { /* silent */ }
+}
+
+// =====================
+// SUBMIT
+// =====================
+async function submitForm(type) {
+  const date   = document.getElementById(`${type}-date`).value;
+  const person = document.getElementById(`${type}-person`).value.trim();
+  const note   = document.getElementById(`${type}-note`).value.trim();
+
+  if (!date || !person) {
+    showToast('⚠️ กรุณากรอกวันที่และชื่อผู้' + (type === 'in' ? 'รับเข้า' : 'เบิกใช้'), 'error');
+    return;
+  }
+
+  const rows = document.querySelectorAll(`#${type}-products .product-row`);
+  const items = [];
+
+  for (const row of rows) {
+    const product = row.querySelector('select')?.value;
+    const qty     = parseInt(row.querySelector('input')?.value);
+    if (!product || !qty || qty < 1) continue;
+
+    if (type === 'out') {
+      const avail = localStock[product] || 0;
+      if (qty > avail) {
+        showToast(`⚠️ ${product}: เบิกเกินคงเหลือ (มี ${avail} ชิ้น)`, 'error');
+        return;
+      }
+    }
+    items.push({ product, qty });
+  }
+
+  if (items.length === 0) {
+    showToast('⚠️ กรุณาเพิ่มรายการสินค้า', 'error');
+    return;
+  }
+
+  const btn = document.getElementById(`btn-${type}`);
+  btn.disabled = true;
+  showToast('', 'loading', 'กำลังบันทึก...');
+
+  try {
+    // ใช้ GET แทน POST เพื่อหลีกเลี่ยงปัญหา CORS preflight
+    const params = new URLSearchParams({
+      action: type === 'in' ? 'stockIn' : 'stockOut',
+      date,
+      person,
+      note,
+      items: JSON.stringify(items),
+    });
+
+    await fetch(`${SCRIPT_URL}?${params.toString()}`, {
+      method: 'GET',
+      mode: 'no-cors',
+    });
+
+    // อัพเดท local stock
+    items.forEach(({ product, qty }) => {
+      localStock[product] = type === 'in'
+        ? (localStock[product] || 0) + qty
+        : Math.max(0, (localStock[product] || 0) - qty);
+    });
+
+    showToast('✅ บันทึกสำเร็จ!', 'success');
+
+    // Reset form
+    document.getElementById(`${type}-products`).innerHTML = '';
+    addProductRow(type);
+    document.getElementById(`${type}-person`).value = '';
+    document.getElementById(`${type}-note`).value = '';
+    setToday(`${type}-date`);
+
+  } catch(e) {
+    showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+  }
+
+  btn.disabled = false;
+}
+
+// =====================
+// TOAST
+// =====================
+let toastTimer;
+function showToast(msg, type = 'success', label = '') {
+  const el = document.getElementById('toast');
+  el.className = `toast ${type}`;
+  el.innerHTML = type === 'loading' ? `<div class="spinner"></div>${label}` : msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  if (type !== 'loading') toastTimer = setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
