@@ -296,6 +296,10 @@
               <option value="ไตดี">ไตดี</option>
             </select>
           </div>
+          <div class="field-group">
+              <label>หมายเหตุ (ถ้ามี)</label>
+              <input type="text" id="in-note" placeholder="เช่น เลขที่ใบสั่งซื้อ" />
+            </div>
         </div>
         <div class="divider"></div>
         <div class="products-header">
@@ -341,6 +345,10 @@
               <option value="ไตล่าง">ไตล่าง</option>
               <option value="ไตดี">ไตดี</option>
             </select>
+          </div>
+        <div class="field-group">
+            <label>หมายเหตุ (ถ้ามี)</label>
+              <input type="text" id="out-note" placeholder="เช่น แผนก / วัตถุประสงค์" />
           </div>
         </div>
         <div class="divider"></div>
@@ -547,6 +555,7 @@ async function submitForm(type) {
   const date   = document.getElementById(`${type}-date`).value;
   const center = document.getElementById(`${type}-center`).value;
   const person = document.getElementById(`${type}-person`).value.trim();
+  const note = document.getElementById(`${type}-note`).value.trim();
 
   if (!date || !center || !person) {
     showToast(`⚠️ กรุณากรอกวันที่ ศูนย์ และชื่อผู้${type === 'in' ? 'รับเข้า' : 'เบิกใช้'}`, 'error');
@@ -583,7 +592,7 @@ async function submitForm(type) {
   try {
     const params = new URLSearchParams({
       action: type === 'in' ? 'stockIn' : 'stockOut',
-      date, center, person,
+      date, center, person, note,
       items: JSON.stringify(items),
     });
 
@@ -602,6 +611,7 @@ async function submitForm(type) {
     document.getElementById(`${type}-products`).innerHTML = '';
     addProductRow(type);
     document.getElementById(`${type}-person`).value = '';
+    document.getElementById(`${type}-note`).value = '';
     setToday(`${type}-date`);
 
   } catch(e) {
