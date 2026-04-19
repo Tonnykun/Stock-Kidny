@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>ระบบบันทึกสต็อก</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -175,7 +175,7 @@
   .divider { height: 1px; background: var(--border); margin: 20px 0; }
 
   .products-header {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
   }
   .products-header span {
     font-size: 11px; font-weight: 700;
@@ -190,17 +190,8 @@
   }
   .btn-add-row:hover { border-color: var(--accent-in); color: var(--accent-in); }
 
-  /* product row: สินค้า | คงเหลือ | จำนวน | ลบ */
-  .product-row {
-    display: grid;
-    gap: 8px;
-    margin-bottom: 8px;
-    align-items: center;
-  }
-
-  /* หน้ารับเข้า: มี 4 คอลัมน์ */
+  .product-row { display: grid; gap: 8px; margin-bottom: 8px; align-items: center; }
   .product-row.row-in  { grid-template-columns: 1fr 110px 90px 32px; }
-  /* หน้าเบิก: 3 คอลัมน์ (ไม่มี badge แยก) */
   .product-row.row-out { grid-template-columns: 1fr 90px 32px; }
 
   .product-row select, .product-row input {
@@ -218,20 +209,12 @@
   .product-row select:focus, .product-row input:focus { border-color: var(--accent-in); }
   .panel-out .product-row select:focus, .panel-out .product-row input:focus { border-color: var(--accent-out); }
 
-  /* กล่องแสดงคงเหลือ inline ในหน้ารับเข้า */
   .inline-stock {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    padding: 9px 10px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 12px;
-    color: var(--text-muted);
-    text-align: center;
-    white-space: nowrap;
-    min-width: 0;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 9px 10px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 12px;
+    color: var(--text-muted); text-align: center; white-space: nowrap; min-width: 0;
   }
-
   .inline-stock .qty-val       { font-weight: 700; color: var(--accent-in); display: block; font-size: 15px; line-height: 1.2; }
   .inline-stock .qty-val.low   { color: var(--accent-out); }
   .inline-stock .qty-val.empty { color: var(--danger); }
@@ -245,7 +228,6 @@
   }
   .btn-remove-row:hover { border-color: var(--danger); color: var(--danger); background: rgba(239,68,68,0.08); }
 
-  /* stock-info สำหรับหน้าเบิก (แถวใต้ dropdown) */
   .stock-info {
     background: var(--surface2); border: 1px solid var(--border);
     border-radius: var(--radius-sm); padding: 10px 14px; margin-top: 6px;
@@ -263,7 +245,7 @@
     header h1 { font-size: 18px; }
     .product-row.row-in  { grid-template-columns: 1fr 80px 32px; }
     .product-row.row-out { grid-template-columns: 1fr 80px 32px; }
-    .inline-stock { display: none; } /* ซ่อนบน mobile แคบ */
+    .inline-stock { display: none; }
   }
 </style>
 </head>
@@ -305,22 +287,21 @@
             <label>ผู้รับเข้า</label>
             <input type="text" id="in-person" placeholder="ชื่อผู้รับสินค้า" />
           </div>
-          <div class="field-group full">
-              <label>ระบุศูนย์</label>
-              <select id="in-note">
-                <option value="">— เลือกศูนย์ —</option>
-                <option value="ไตบน">ไตบน</option>
-                <option value="ไตล่าง">ไตล่าง</option>
-                <option value="ไตดี">ไตดี</option>
-              </select>
-            </div>
+          <div class="field-group">
+            <label>ระบุศูนย์</label>
+            <select id="in-center" onchange="refreshInBadges()">
+              <option value="">— เลือกศูนย์ —</option>
+              <option value="ไตบน">ไตบน</option>
+              <option value="ไตล่าง">ไตล่าง</option>
+              <option value="ไตดี">ไตดี</option>
+            </select>
           </div>
+        </div>
         <div class="divider"></div>
         <div class="products-header">
           <span>รายการสินค้า</span>
           <button class="btn-add-row" onclick="addProductRow('in')">+ เพิ่มรายการ</button>
         </div>
-        <!-- column headers -->
         <div style="display:grid;grid-template-columns:1fr 110px 90px 32px;gap:8px;margin-bottom:6px;padding:0 2px;">
           <span style="font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.8px;">สินค้า</span>
           <span style="font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.8px;text-align:center;">คงเหลือเดิม</span>
@@ -352,9 +333,9 @@
             <label>ผู้เบิกใช้</label>
             <input type="text" id="out-person" placeholder="ชื่อผู้เบิกสินค้า" />
           </div>
-          <div class="field-group full">
+          <div class="field-group">
             <label>ระบุศูนย์</label>
-            <select id="out-note">
+            <select id="out-center" onchange="refreshOutInfo()">
               <option value="">— เลือกศูนย์ —</option>
               <option value="ไตบน">ไตบน</option>
               <option value="ไตล่าง">ไตล่าง</option>
@@ -385,6 +366,8 @@
 // =====================
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw8Z3jtbpRZB5ZslPK2u_Cdtcw_hiVVP9Gg6xOHnkSgBbT2xhrEikOid5cLcdcPdG5a/exec';
 
+const CENTERS = ['ไตบน', 'ไตล่าง', 'ไตดี'];
+
 const PRODUCTS = [
   'K3 Ca 3.5',
   'K3 Ca 2.5',
@@ -393,11 +376,14 @@ const PRODUCTS = [
   'NSS',
   'น้ำยา On-line',
   'Citrosteri',
-
 ];
 
+// localStock แยกตามศูนย์ เช่น localStock['ไตดี']['K3 Ca 3.5'] = 10
 let localStock = {};
-PRODUCTS.forEach(p => localStock[p] = 0);
+CENTERS.forEach(c => {
+  localStock[c] = {};
+  PRODUCTS.forEach(p => localStock[c][p] = 0);
+});
 
 // =====================
 // INIT
@@ -434,7 +420,6 @@ function addProductRow(type) {
   const opts = PRODUCTS.map(p => `<option value="${p}">${p}</option>`).join('');
 
   if (type === 'in') {
-    // แถวหน้ารับเข้า: สินค้า | คงเหลือเดิม (badge) | จำนวนรับเข้า | ลบ
     const div = document.createElement('div');
     div.className = 'product-row row-in';
     div.innerHTML = `
@@ -450,9 +435,7 @@ function addProductRow(type) {
       <button class="btn-remove-row" onclick="removeRow(this)" title="ลบ">✕</button>
     `;
     container.appendChild(div);
-
   } else {
-    // แถวหน้าเบิก: สินค้า | จำนวน | ลบ + stock-info ใต้แถว
     const div = document.createElement('div');
     div.className = 'product-row row-out';
     div.innerHTML = `
@@ -480,20 +463,25 @@ function removeRow(btn) {
   row.remove();
 }
 
+// ดึง stock ของศูนย์ที่เลือก
+function getStockForCenter(type) {
+  const center = document.getElementById(`${type}-center`).value;
+  return center ? (localStock[center] || {}) : {};
+}
+
 // อัพเดท badge คงเหลือในหน้ารับเข้า
 function updateInlineStock(select) {
   const row = select.parentElement;
   const badge = row.querySelector('.inline-stock');
   if (!badge) return;
-
   const product = select.value;
   if (!product) {
     badge.querySelector('.qty-val').textContent = '—';
     badge.querySelector('.qty-val').className = 'qty-val';
     return;
   }
-
-  const qty = localStock[product] || 0;
+  const stock = getStockForCenter('in');
+  const qty = stock[product] || 0;
   const valEl = badge.querySelector('.qty-val');
   valEl.textContent = qty;
   valEl.className = 'qty-val' + (qty <= 0 ? ' empty' : qty <= 5 ? ' low' : '');
@@ -506,17 +494,26 @@ function updateStockInfo(select) {
   if (!next || !next.classList.contains('stock-info')) return;
   const product = select.value;
   if (!product) { next.style.display = 'none'; return; }
-  const qty = localStock[product] || 0;
+  const stock = getStockForCenter('out');
+  const qty = stock[product] || 0;
   next.style.display = 'flex';
   const cls = qty <= 0 ? 'empty' : qty <= 5 ? 'low' : 'ok';
   next.innerHTML = `สินค้า: <strong style="color:var(--text)">${product}</strong> &nbsp;|&nbsp; คงเหลือ: <span class="val ${cls}">${qty} ชิ้น</span>`;
 }
 
-// refresh badge ทุกแถวในหน้ารับเข้าหลัง fetchStock
-function refreshAllInlineBadges() {
+// refresh badge ทุกแถวเมื่อเปลี่ยนศูนย์ (หน้ารับเข้า)
+function refreshInBadges() {
   document.querySelectorAll('#in-products .product-row.row-in').forEach(row => {
     const sel = row.querySelector('select');
-    if (sel && sel.value) updateInlineStock(sel);
+    if (sel) updateInlineStock(sel);
+  });
+}
+
+// refresh stock-info ทุกแถวเมื่อเปลี่ยนศูนย์ (หน้าเบิก)
+function refreshOutInfo() {
+  document.querySelectorAll('#out-products .product-row.row-out').forEach(row => {
+    const sel = row.querySelector('select');
+    if (sel && sel.value) updateStockInfo(sel);
   });
 }
 
@@ -528,8 +525,17 @@ async function fetchStock() {
     const res = await fetch(`${SCRIPT_URL}?action=getStock`);
     const data = await res.json();
     if (data.stock) {
-      localStock = data.stock;
-      refreshAllInlineBadges();
+      // data.stock = { 'ไตดี::K3 Ca 3.5': 10, ... }
+      // แปลงเป็น localStock[center][product]
+      Object.entries(data.stock).forEach(([key, val]) => {
+        const sep = key.indexOf('::');
+        if (sep === -1) return;
+        const center  = key.substring(0, sep);
+        const product = key.substring(sep + 2);
+        if (!localStock[center]) localStock[center] = {};
+        localStock[center][product] = val;
+      });
+      refreshInBadges();
     }
   } catch(e) { /* silent */ }
 }
@@ -539,18 +545,15 @@ async function fetchStock() {
 // =====================
 async function submitForm(type) {
   const date   = document.getElementById(`${type}-date`).value;
+  const center = document.getElementById(`${type}-center`).value;
   const person = document.getElementById(`${type}-person`).value.trim();
-  const note   = document.getElementById(`${type}-note`).value.trim();
 
-  if (!date || !person || !note) {
-    showToast(
-      `⚠️ กรุณากรอกวันที่ ชื่อผู้${type === 'in' ? 'รับเข้า' : 'เบิกใช้'} และเลือกศูนย์`,
-      'error'
-    );
+  if (!date || !center || !person) {
+    showToast(`⚠️ กรุณากรอกวันที่ ศูนย์ และชื่อผู้${type === 'in' ? 'รับเข้า' : 'เบิกใช้'}`, 'error');
     return;
   }
 
-  const rows = document.querySelectorAll(`#${type}-products .product-row`);
+  const rows  = document.querySelectorAll(`#${type}-products .product-row`);
   const items = [];
 
   for (const row of rows) {
@@ -559,9 +562,9 @@ async function submitForm(type) {
     if (!product || !qty || qty < 1) continue;
 
     if (type === 'out') {
-      const avail = localStock[product] || 0;
+      const avail = (localStock[center] || {})[product] || 0;
       if (qty > avail) {
-        showToast(`⚠️ ${product}: เบิกเกินคงเหลือ (มี ${avail} ชิ้น)`, 'error');
+        showToast(`⚠️ ${product} (${center}): เบิกเกินคงเหลือ (มี ${avail} ชิ้น)`, 'error');
         return;
       }
     }
@@ -580,16 +583,18 @@ async function submitForm(type) {
   try {
     const params = new URLSearchParams({
       action: type === 'in' ? 'stockIn' : 'stockOut',
-      date, person, note,
+      date, center, person,
       items: JSON.stringify(items),
     });
 
     await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET', mode: 'no-cors' });
 
+    // อัพเดท localStock ตามศูนย์
+    if (!localStock[center]) localStock[center] = {};
     items.forEach(({ product, qty }) => {
-      localStock[product] = type === 'in'
-        ? (localStock[product] || 0) + qty
-        : Math.max(0, (localStock[product] || 0) - qty);
+      localStock[center][product] = type === 'in'
+        ? (localStock[center][product] || 0) + qty
+        : Math.max(0, (localStock[center][product] || 0) - qty);
     });
 
     showToast('✅ บันทึกสำเร็จ!', 'success');
@@ -597,7 +602,6 @@ async function submitForm(type) {
     document.getElementById(`${type}-products`).innerHTML = '';
     addProductRow(type);
     document.getElementById(`${type}-person`).value = '';
-    document.getElementById(`${type}-note`).value = '';
     setToday(`${type}-date`);
 
   } catch(e) {
