@@ -447,6 +447,15 @@ CENTERS.forEach(c => {
   PRODUCTS.forEach(p => localStock[c][p] = 0);
 });
 
+const formRequestIds = {
+  in: newRequestId('in'),
+  out: newRequestId('out')
+};
+
+function newRequestId(type) {
+  return `${type}-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 // =====================
 // INIT
 // =====================
@@ -598,6 +607,7 @@ async function fetchStock() {
         localStock[center][product] = val;
       });
       refreshInBadges();
+      refreshOutInfo();
     }
   } catch(e) { /* silent */ }
 }
@@ -606,10 +616,13 @@ async function fetchStock() {
 // SUBMIT
 // =====================
 async function submitForm(type) {
+  const btn = document.getElementById(`btn-${type}`);
+  if (btn.disabled) return; {
   const date   = document.getElementById(`${type}-date`).value;
   const center = document.getElementById(`${type}-center`).value;
   const person = document.getElementById(`${type}-person`).value.trim();
   const note = document.getElementById(`${type}-note`).value.trim();
+  const requestId = formRequestIds[type];
 
   if (!date || !center || !person) {
     showToast(`⚠️ กรุณากรอกวันที่ ศูนย์ และชื่อผู้${type === 'in' ? 'รับเข้า' : 'เบิกใช้'}`, 'error');
@@ -644,11 +657,15 @@ async function submitForm(type) {
   showToast('', 'loading', 'กำลังบันทึก...');
 
   try {
-    const params = new URLSearchParams({
-      action: type === 'in' ? 'stockIn' : 'stockOut',
-      date, center, person, note,
-      items: JSON.stringify(items),
-    });
+  const params = new URLSearchParams({
+    action: type === 'in' ? 'stockIn' : 'stockOut',
+    date,
+    center,
+    person,
+    note,
+    requestId,
+    items: JSON.stringify(items),
+});
 
     await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET', mode: 'no-cors' });
 
@@ -661,6 +678,7 @@ async function submitForm(type) {
     });
 
     showToast('✅ บันทึกสำเร็จ!', 'success');
+    formRequestIds[type] = newRequestId(type);
 
     document.getElementById(`${type}-products`).innerHTML = '';
     addProductRow(type);
