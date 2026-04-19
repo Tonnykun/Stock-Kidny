@@ -617,8 +617,9 @@ async function fetchStock() {
 // =====================
 async function submitForm(type) {
   const btn = document.getElementById(`btn-${type}`);
-  if (btn.disabled) return; {
-  const date   = document.getElementById(`${type}-date`).value;
+  if (btn.disabled) return;
+
+  const date = document.getElementById(`${type}-date`).value;
   const center = document.getElementById(`${type}-center`).value;
   const person = document.getElementById(`${type}-person`).value.trim();
   const note = document.getElementById(`${type}-note`).value.trim();
@@ -629,12 +630,13 @@ async function submitForm(type) {
     return;
   }
 
-  const rows  = document.querySelectorAll(`#${type}-products .product-row`);
+  const rows = document.querySelectorAll(`#${type}-products .product-row`);
   const items = [];
 
   for (const row of rows) {
     const product = row.querySelector('select')?.value;
-    const qty     = parseInt(row.querySelector('input[type=number]')?.value);
+    const qty = parseInt(row.querySelector('input[type=number]')?.value);
+
     if (!product || !qty || qty < 1) continue;
 
     if (type === 'out') {
@@ -644,6 +646,7 @@ async function submitForm(type) {
         return;
       }
     }
+
     items.push({ product, qty });
   }
 
@@ -652,25 +655,27 @@ async function submitForm(type) {
     return;
   }
 
-  const btn = document.getElementById(`btn-${type}`);
   btn.disabled = true;
   showToast('', 'loading', 'กำลังบันทึก...');
 
   try {
-  const params = new URLSearchParams({
-    action: type === 'in' ? 'stockIn' : 'stockOut',
-    date,
-    center,
-    person,
-    note,
-    requestId,
-    items: JSON.stringify(items),
-});
+    const params = new URLSearchParams({
+      action: type === 'in' ? 'stockIn' : 'stockOut',
+      date,
+      center,
+      person,
+      note,
+      requestId,
+      items: JSON.stringify(items),
+    });
 
-    await fetch(`${SCRIPT_URL}?${params.toString()}`, { method: 'GET', mode: 'no-cors' });
+    await fetch(`${SCRIPT_URL}?${params.toString()}`, {
+      method: 'GET',
+      mode: 'no-cors'
+    });
 
-    // อัพเดท localStock ตามศูนย์
     if (!localStock[center]) localStock[center] = {};
+
     items.forEach(({ product, qty }) => {
       localStock[center][product] = type === 'in'
         ? (localStock[center][product] || 0) + qty
@@ -686,11 +691,17 @@ async function submitForm(type) {
     document.getElementById(`${type}-note`).value = '';
     setToday(`${type}-date`);
 
-  } catch(e) {
-    showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
-  }
+    if (type === 'in') {
+      refreshInBadges();
+    } else {
+      refreshOutInfo();
+    }
 
-  btn.disabled = false;
+  } catch (e) {
+    showToast('❌ เกิดข้อผิดพลาด กรุณาลองใหม่', 'error');
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 // =====================
