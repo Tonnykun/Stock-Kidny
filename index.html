@@ -239,14 +239,68 @@
   .stock-info .val.low   { color: var(--accent-out); }
   .stock-info .val.empty { color: var(--danger); }
 
-  @media (max-width: 600px) {
-    .form-grid { grid-template-columns: 1fr; }
-    .form-grid .full { grid-column: 1; }
-    header h1 { font-size: 18px; }
-    .product-row.row-in  { grid-template-columns: 1fr 80px 32px; }
-    .product-row.row-out { grid-template-columns: 1fr 80px 32px; }
-    .inline-stock { display: none; }
+.products-columns-in {
+  display: grid;
+  grid-template-columns: 1fr 110px 90px 32px;
+  gap: 8px;
+  margin-bottom: 6px;
+  padding: 0 2px;
+}
+
+.products-columns-in span {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+
+.products-columns-in span:nth-child(2),
+.products-columns-in span:nth-child(3) {
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .form-grid .full { grid-column: 1; }
+  header h1 { font-size: 18px; }
+
+  .products-columns-in {
+    display: none;
   }
+
+  .product-row.row-in {
+    grid-template-columns: 1fr 90px 32px;
+    grid-template-areas:
+      "product qty remove"
+      "stock   qty remove";
+    align-items: start;
+  }
+
+  .product-row.row-in select {
+    grid-area: product;
+  }
+
+  .product-row.row-in .inline-stock {
+    grid-area: stock;
+    display: block;
+    text-align: left;
+    padding: 8px 10px;
+    min-height: 44px;
+  }
+
+  .product-row.row-in input {
+    grid-area: qty;
+  }
+
+  .product-row.row-in .btn-remove-row {
+    grid-area: remove;
+  }
+
+  .product-row.row-out {
+    grid-template-columns: 1fr 80px 32px;
+  }
+}
 </style>
 </head>
 <body>
@@ -306,12 +360,12 @@
           <span>รายการสินค้า</span>
           <button class="btn-add-row" onclick="addProductRow('in')">+ เพิ่มรายการ</button>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 110px 90px 32px;gap:8px;margin-bottom:6px;padding:0 2px;">
-          <span style="font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.8px;">สินค้า</span>
-          <span style="font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.8px;text-align:center;">คงเหลือเดิม</span>
-          <span style="font-size:11px;color:var(--text-dim);font-weight:600;text-transform:uppercase;letter-spacing:.8px;text-align:center;">รับเข้า</span>
-          <span></span>
-        </div>
+          <div class="products-columns-in">
+            <span>สินค้า</span>
+            <span>คงเหลือเดิม</span>
+            <span>รับเข้า</span>
+            <span></span>
+          </div>
         <div id="in-products"></div>
         <button class="btn-submit btn-submit-in" id="btn-in" onclick="submitForm('in')">
           📥 บันทึกการรับสินค้า
